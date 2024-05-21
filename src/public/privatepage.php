@@ -7,11 +7,18 @@ $pdo = new PDO(
     $dbPassword
 );
 
+// 指定された並び替えのデータを変数に代入
+$order = isset($_GET['order']) ? $_GET['order'] : '';
 $sql = 'SELECT * FROM pages';
-$statement = $pdo->prepare($sql);
-$statement->bindValue(':title', $title, PDO::PARAM_STR);
-$statement->bindValue(':content', $content, PDO::PARAM_STR);
 
+// 並び替えの指定を設定
+if ($order === 'asc') {
+  $sql .= ' ORDER BY created_at ASC';
+} else {
+  $sql .= ' ORDER BY created_at DESC'; 
+}
+
+$statement = $pdo->prepare($sql);
 $statement->execute();
 $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -29,7 +36,8 @@ $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
 <body>
   <div>
     <div>
-      <form action="index.php" method="get">
+      <!-- 作成日の並び替えフォーム -->
+      <form action="privatepage.php" method="get">
         <div>
           <label>
             <input type="radio" name="order" value="desc" class="">
