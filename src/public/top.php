@@ -7,10 +7,26 @@ $pdo = new PDO(
     $dbPassword
 );
 
-$sql = 'SELECT * FROM pages';
+$keyword = isset($_GET['search']) ? $_GET['search'] : '';
+// 日付選択のデータを取得
+$date = isset($_GET['date']) ? $_GET['date'] : '';
+
+$name = '%' . $keyword . '%';
+$contents = '%' . $keyword . '%';
+
+$sql = 'SELECT * FROM pages WHERE (name LIKE :name OR contents LIKE :contents)';
+
+// 日付のSQL条件を追加
+if (!empty($date)) {
+  $sql .= ' AND DATE(created_at) = :date';
+}
+
 $statement = $pdo->prepare($sql);
-$statement->bindValue(':title', $title, PDO::PARAM_STR);
-$statement->bindValue(':content', $content, PDO::PARAM_STR);
+$statement->bindValue(':name', $name, PDO::PARAM_STR);
+$statement->bindValue(':contents', $contents, PDO::PARAM_STR);
+if (!empty($date)) {
+  $statement->bindValue(':date', $date, PDO::PARAM_STR);
+}
 $statement->execute();
 $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -27,22 +43,28 @@ $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
 
 <body>
   <div>
+    <form action="top.php" method="get">
+      <input type="text" name="search" placeholder="キーワードを入力"><br>
+      <!-- 日付の選択フォームの追加 -->
+      <input type="date" name="date" value="<?php echo $date; ?>"><br>
+      <input type="submit">
+    </form>
     <div>
       <form action="index.php" method="get">
         <div>
           <label>
-            <input type="radio" name="order" value="desc" class="">
+            <input type="radio" name="order" value="desc">
             <span>新着順</span>
           </label>
           <label>
-            <input type="radio" name="order" value="asc" class="">
+            <input type="radio" name="order" value="asc">
             <span>古い順</span>
           </label>
         </div>
         <button type="submit">送信</button>
       </form>
     </div>
-
+    
     <div>
       <table border="1">
         <tr>
