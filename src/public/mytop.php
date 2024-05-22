@@ -7,10 +7,31 @@ $pdo = new PDO(
     $dbPassword
 );
 
-$sql = 'SELECT * FROM pages';
+// キーワードのデータを変数に代入
+$keyword = isset($_GET['search']) ? '%' . $_GET['search'] .'%' : '%%';
+
+// 期間の作成日フォームの変数
+$start_date = isset($_GET['start_date']) ? $_GET['start_date'] : '';
+$end_date = isset($_GET['end_date']) ? $_GET['end_date'] : '';
+
+
+// キーワードが含まれるデータを取得
+$sql = 'SELECT * FROM pages WHERE (name LIKE :search OR contents LIKE :search)';
+
+// 期間の作成日が送信された場合のデータ取得
+if (!empty($start_date) && !empty($end_date)) {
+  $sql .= ' AND created_at BETWEEN :start_date AND :end_date';
+}
+
 $statement = $pdo->prepare($sql);
-$statement->bindValue(':title', $title, PDO::PARAM_STR);
-$statement->bindValue(':content', $content, PDO::PARAM_STR);
+$statement->bindValue(':search', $keyword, PDO::PARAM_STR);
+
+// 期間の作成日が送信された場合のバインド
+if (!empty($start_date) && !empty($end_date)) {
+  $statement->bindValue(':start_date', $start_date, PDO::PARAM_STR);
+  $statement->bindValue(':end_date', $end_date, PDO::PARAM_STR);
+}
+
 $statement->execute();
 $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -27,21 +48,17 @@ $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
 
 <body>
   <div>
-    <div>
-      <form action="index.php" method="get">
-        <div>
-          <label>
-            <input type="radio" name="order" value="desc" class="">
-            <span>新着順</span>
-          </label>
-          <label>
-            <input type="radio" name="order" value="asc" class="">
-            <span>古い順</span>
-          </label>
-        </div>
+    <form action="mytop.php" method="get">
+      <!-- 検索フォーム -->
+      <input type="text" name="search" placeholder="検索ワードを入力"><br>
+        <!-- 期間の作成日フォーム -->
+          <label>期間指定：</label>
+          <input type="date" name="start_date" value="<?php echo $start_date; ?>" required>
+          <label>～</label>
+          <input type="date" name="end_date" value="<?php echo $end_date; ?>" required>
         <button type="submit">送信</button>
       </form>
-    </div>
+  </div>
 
     <div>
       <table border="1">

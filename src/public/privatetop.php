@@ -6,11 +6,36 @@ $pdo = new PDO(
     $dbUserName,
     $dbPassword
 );
+// キーワードのデータを変数に代入
+$keyword = isset($_GET['search']) ? '%'. $_GET['search']. '%' : '%%';
 
-$sql = 'SELECT * FROM pages';
+// 作成日時のデータを取得
+$date = isset($_GET['date']) ? $_GET['date'] : '';
+
+// 指定された並び替えのデータを変数に代入
+$order = isset($_GET['order']) ? $_GET['order'] : '';
+
+// キーワードが含まれるデータを取得
+$sql = 'SELECT * FROM pages WHERE name LIKE :search OR contents LIKE :search';
+
+// 作成日時が含まれるデータを取得
+if (!empty($date)) {
+  $sql .= ' AND DATE(created_at) = :date';
+}
+
+// 並び替えの指定を設定
+if ($order === 'asc') {
+  $sql .= ' ORDER BY created_at ASC';
+} else {
+  $sql .= ' ORDER BY created_at DESC';
+}
+
 $statement = $pdo->prepare($sql);
-$statement->bindValue(':title', $title, PDO::PARAM_STR);
-$statement->bindValue(':content', $content, PDO::PARAM_STR);
+$statement->bindValue(':search', $keyword, PDO::PARAM_STR);
+
+if (!empty($date)) {
+  $statement->bindValue(':date', $date, PDO::PARAM_STR);
+}
 
 $statement->execute();
 $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
@@ -28,11 +53,12 @@ $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
 
 <body>
   <div>
-
-    <div>
-      <form action="index.php" method="get">
-        <div>
-
+    <!-- キーワード検索フォーム -->
+    <form action="privatetop.php" method="get">
+      <input type="text" name="search" placeholder="キーワードを入力"><br>
+      <!-- 作成日時のフォーム -->
+      <input type="date" name="date"><br>
+      <!-- 並び替えフォーム -->
           <label>
             <input type="radio" name="order" value="desc" class="">
             <span>新着順</span>
@@ -43,8 +69,8 @@ $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
           </label>
         </div>
         <button type="submit">送信</button>
-      </form>
-    </div>
+    </form>
+  </div>
     
     <div>
       <table border="1">

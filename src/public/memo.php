@@ -7,10 +7,24 @@ $pdo = new PDO(
     $dbPassword
 );
 
-$sql = 'SELECT * FROM pages';
+// キーワードのデータを変数に代入
+$search = isset($_GET['search']) ? '%' . $_GET["search"] . '%' : '%%';
+
+// 指定された並び替えのデータを変数に代入
+$order = isset($_GET['order']) ? $_GET['order'] : '';
+
+// キーワードが含まれるデータを取得
+$sql = 'SELECT * FROM pages WHERE name LIKE :search OR contents LIKE :search';
+
+// 並び替えの指定を設定
+if ($order === 'asc') {
+  $sql .= ' ORDER BY created_at ASC';
+} else {
+  $sql .= ' ORDER BY created_at DESC'; 
+}
+
 $statement = $pdo->prepare($sql);
-$statement->bindValue(':title', $title, PDO::PARAM_STR);
-$statement->bindValue(':content', $content, PDO::PARAM_STR);
+$statement->bindValue(':search', $search, PDO::PARAM_STR);
 $statement->execute();
 $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -27,9 +41,11 @@ $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
 
 <body>
   <div>
-    <div>
-      <form action="index.php" method="get">
-        <div>
+    <!-- キーワード検索フォームの作成 -->
+    <form action="memo.php" method="get">
+      <input type="text" name="search"><br>
+      <div>
+      <!-- 作成日の並び替えフォーム -->
           <label>
             <input type="radio" name="order" value="desc" class="">
             <span>新着順</span>
@@ -40,7 +56,7 @@ $pages = $statement->fetchAll(PDO::FETCH_ASSOC);
           </label>
         </div>
         <button type="submit">送信</button>
-      </form>
+    </form>
     </div>
 
     <div>
